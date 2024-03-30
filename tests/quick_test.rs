@@ -25,8 +25,11 @@ async fn quick_dev() -> Result<()> {
         "/api/tickets",
         json!({
             "title": "ticket AAA"
-        })
-    ).await?.print().await;
+        }),
+    )
+    .await?
+    .print()
+    .await;
 
     hc.do_delete("/api/tickets/0").await?.print().await;
 
