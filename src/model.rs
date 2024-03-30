@@ -8,6 +8,7 @@ pub struct Ticket {
     pub title: String,
 }
 
+#[derive(Deserialize)]
 pub struct TicketForCreate {
     pub title: String,
 }
@@ -18,7 +19,7 @@ pub struct ModelController {
 }
 
 impl ModelController {
-    pub async fn new(self) -> ModelController {
+    pub async fn new() -> ModelController {
         Self {
             ticket_store: Arc::default(),
         }
@@ -26,7 +27,7 @@ impl ModelController {
 }
 
 impl ModelController {
-    pub fn create_ticket(&self, ticket_fc: TicketForCreate) -> Result<Ticket, Error> {
+    pub async fn create_ticket(&self, ticket_fc: TicketForCreate) -> Result<Ticket, Error> {
         let mut store = self.ticket_store.lock().unwrap();
         let id = store.len() as u64;
         let ticket = Ticket {
@@ -37,13 +38,13 @@ impl ModelController {
         Ok(ticket)
     }
 
-    pub fn list_tickets(&self) -> Result<Vec<Ticket>, Error> {
+    pub async fn list_tickets(&self) -> Result<Vec<Ticket>, Error> {
         let store = self.ticket_store.lock().unwrap();
         let ticket_filter = store.iter().filter_map(|t| t.clone()).collect();
         Ok(ticket_filter)
     }
 
-    pub fn delete_ticket(&self, id: u64) -> Result<Ticket, Error> {
+    pub async fn delete_ticket(&self, id: u64) -> Result<Ticket, Error> {
         let mut store = self.ticket_store.lock().unwrap();
         let ticket = store.get_mut(id as usize).and_then(|t| t.take());
         ticket.ok_or(Error::TicketDeleteFileIdNotFound(id))

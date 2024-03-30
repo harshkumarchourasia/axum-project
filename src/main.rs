@@ -11,6 +11,7 @@ use tokio;
 mod errors;
 mod model;
 mod web;
+use crate::model::ModelController;
 use errors::Error;
 use model::Ticket;
 use web::routes_login::login_handler;
@@ -32,15 +33,18 @@ fn routes_hello() -> Router {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
+    let mc = ModelController::new().await;
     let router: Router<()> = Router::new()
         .merge(routes_hello())
         .merge(login_handler())
+        .nest("/api", web::routes_tickets::routes(mc.clone()))
         .layer(axum::middleware::map_response(main_response_mapper))
         .layer(tower_cookies::CookieManagerLayer::new());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, router).await.unwrap();
+    Ok(())
 }
 
 async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
@@ -58,6 +62,6 @@ async fn handler_bye(Path(name): Path<String>) -> impl IntoResponse {
 
 async fn main_response_mapper(res: axum::response::Response) -> axum::response::Response {
     println!("main response mapper");
-    println!("");
+    println!();
     res
 }

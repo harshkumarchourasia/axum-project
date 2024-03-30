@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use anyhow::Result;
 use httpc_test;
 use serde_json::json;
@@ -18,5 +20,15 @@ async fn quick_dev() -> Result<()> {
     .await?
     .print()
     .await;
+
+    hc.do_post(
+        "/api/tickets",
+        json!({
+            "title": "ticket AAA"
+        })
+    ).await?.print().await;
+
+    hc.do_delete("/api/tickets/0").await?.print().await;
+
     Ok(())
 }
