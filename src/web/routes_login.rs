@@ -5,6 +5,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
+use tracing;
 pub fn login_handler() -> Router<()> {
     Router::new().route("/api/login", post(api_login))
 }
@@ -19,9 +20,11 @@ async fn api_login(cookies: Cookies, payload: Json<LoginPayload>) -> Result<Json
             }
         ));
         cookies.add(Cookie::new(AUTH_TOKEN, "user-1.exp.sign"));
+        tracing::info!("Login Successfully");
         Ok(body)
     } else {
-        return Err(Error::LoginFail);
+        tracing::error!("Login Failed");
+        Err(Error::LoginFail)
     }
 }
 

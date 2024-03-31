@@ -15,6 +15,9 @@ use crate::model::ModelController;
 use errors::Error;
 use model::Ticket;
 use web::routes_login::login_handler;
+use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
+use tracing;
 
 #[derive(Debug, Deserialize)]
 struct HelloParams {
@@ -34,11 +37,19 @@ fn routes_hello() -> Router {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .init();
+
+
     let mc = ModelController::new().await;
     let router: Router<()> = Router::new()
         .merge(routes_hello())
         .merge(login_handler())
         .nest("/api", web::routes_tickets::routes(mc.clone()))
+        .layer(ServiceBuilder::new()
+            .layer(TraceLayer::new_for_http()))
         .layer(axum::middleware::map_response(main_response_mapper))
         .layer(tower_cookies::CookieManagerLayer::new());
 
@@ -50,18 +61,17 @@ async fn main() -> Result<(), Error> {
 async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
     let name = params.name.unwrap_or("World".to_string());
     let response = format!("Hello {name}");
-    println!("{}", response);
+    tracing::info!("Say hello to user");
     Html(response)
 }
 
 async fn handler_bye(Path(name): Path<String>) -> impl IntoResponse {
     let response = format!("Bye {name}");
-    println!("{}", response);
+    tracing::info!("Say bye to user");
     Html(response)
 }
 
 async fn main_response_mapper(res: axum::response::Response) -> axum::response::Response {
-    println!("main response mapper");
-    println!();
+    tracing::info!("Main Response Handler");
     res
 }

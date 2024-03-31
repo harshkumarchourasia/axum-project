@@ -22,6 +22,17 @@ async fn quick_dev() -> Result<()> {
     .await;
 
     hc.do_post(
+        "/api/login",
+        json!({
+            "username": "admin",
+            "password": "admin2"
+        }),
+    )
+        .await?
+        .print()
+        .await;
+
+    hc.do_post(
         "/api/tickets",
         json!({
             "title": "ticket AAA"
